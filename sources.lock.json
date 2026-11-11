@@ -1,0 +1,27 @@
+{
+  "release": "0.1.0",
+  "platform": "linux/amd64",
+  "components": {
+    "framework": {
+      "repository": "Course-Flow-Lab/courseflow-framework",
+      "commit": "d23b77da806943006d31ceb414cf3dac17adc83e"
+    },
+    "webui": {
+      "repository": "Course-Flow-Lab/courseflow-webui",
+      "commit": "739f161bdeb467a8d72502c15841fa3898c91710"
+    },
+    "zhs": {
+      "repository": "Course-Flow-Lab/courseflow-zhs",
+      "commit": "c14172e9212d5bb927bc76fb2e0811ac343cb73f"
+    },
+    "cx": {
+      "repository": "Course-Flow-Lab/courseflow-chaoxing",
+      "commit": "f8a2b7852b17d6982174a67dc84620ef5e81cf4b"
+    }
+  },
+  "base_images": {
+    "node": "node@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9",
+    "rust": "rust@sha256:af306cfa71d987911a781c37b59d7d67d934f49684058f96cf72079c3626bfe0",
+    "nginx": "nginx@sha256:583b7f2fce1cdb8da5ad5c39ebd3c33b98b87d493190e548bdee1fa8c619c311"
+  }
+}
