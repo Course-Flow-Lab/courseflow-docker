@@ -1,0 +1,10 @@
+import {spawnSync} from 'node:child_process';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+assert.ok(fs.existsSync('../courseflow-zhs/target/release/courseflow-zhs'));
+assert.ok(fs.existsSync('../courseflow-chaoxing/main.py'));
+assert.equal(spawnSync(process.env.CF_CX_PYTHON,['-c','import lxml,Crypto,fontTools']).status,0);
+const files=fs.readdirSync('test').filter(x=>/\.test\.(ts|mjs)$/.test(x)).map(x=>'test/'+x);
+const result=spawnSync('node',['--test','--test-reporter=tap',...files],{encoding:'utf8',maxBuffer:16*1024*1024});
+process.stdout.write(result.stdout??'');process.stderr.write(result.stderr??'');
+assert.equal(result.status,0);assert.match(result.stdout,/# skipped 0(?:\n|$)/);

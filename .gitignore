@@ -1,0 +1,10 @@
+.env
+.state/
+.build/
+dist/
+*.tgz
+*.tar.gz
+*.log
+*.db*
+secret.key
+__pycache__/

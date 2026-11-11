@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+COMMAND=${1:-help}; shift || true
+fail() { printf '%s\n' "$*" >&2; exit 1; }
+if [[ "$COMMAND" == help || "$COMMAND" == --help ]]; then
+  printf '%s\n' 'Usage: scripts/courseflow doctor|init|up|down|status|setup-code|backup|restore' \
+    '       scripts/courseflow update /path/to/images.lock.env' \
+    '       scripts/courseflow export-backup /private/offsite/directory' \
+    '       scripts/courseflow import-backup /path/to/courseflow-backup.tgz' \
+    '       scripts/courseflow load /path/to/offline-release-directory'
+  exit 0
+fi
+read_config() {
+  local file=$1 kind=$2 line key value
+  [[ -f "$file" ]] || fail "Missing configuration: $file"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    [[ "$line" == *=* ]] || fail "Use plain KEY=value lines in $file"
+    key=${line%%=*}; value=${line#*=}
+    if [[ "$kind" == settings ]]; then
+      case "$key" in PUBLIC_URL|WEB_PORT|PROJECT_NAME|STATE_DIR) ;; *) fail "Unsupported setting: $key";; esac
+    else
+      case "$key" in API_IMAGE|WEB_IMAGE) ;; *) fail "Unsupported image key: $key";; esac
+    fi
+    [[ "$value" != *$'\r'* && "$value" != *'"'* && "$value" != *"'"* && "$value" != *'$'* ]] || fail 'Use unquoted literal configuration values'
+    printf -v "$key" '%s' "$value"
+  done < "$file"
+}
+PROJECT_NAME=courseflow-docker; WEB_PORT=8100; PUBLIC_URL=
+STATE_DIR=${CF_STATE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/courseflow-docker}
+read_config "${CF_CONFIG:-$ROOT/.env}" settings
+[[ "$STATE_DIR" == /* && "$STATE_DIR" != / && "$STATE_DIR" != "$HOME" && "$STATE_DIR" != *$'\n'* ]] || fail 'STATE_DIR must be an absolute private instance directory'
+[[ "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9_-]+$ ]] || fail 'Invalid PROJECT_NAME'
+[[ "$WEB_PORT" =~ ^[0-9]+$ ]] && (( WEB_PORT>0 && WEB_PORT<65536 )) || fail 'Invalid WEB_PORT'
+[[ "$PUBLIC_URL" =~ ^https?://[^/\?#[:space:]]+/?$ ]] || fail 'PUBLIC_URL must be a complete HTTP(S) origin without a path'
+mkdir -p "$STATE_DIR"; chmod 700 "$STATE_DIR"
+[[ $(stat -c '%a' "$STATE_DIR") == 700 ]] || fail 'STATE_DIR must support private Unix permissions (use a Linux filesystem)'
+export STATE_DIR
+command -v flock >/dev/null || fail 'Install flock (util-linux)'
+exec 9>"$STATE_DIR/.lock"
+flock -n 9 || fail 'Another operation is running for this instance'
+IMAGES=${CF_IMAGES_LOCK:-$ROOT/images.lock.env}
+load_images() {
+  unset API_IMAGE WEB_IMAGE
+  read_config "$1" images
+  : "${API_IMAGE:?Missing API_IMAGE}" "${WEB_IMAGE:?Missing WEB_IMAGE}"
+  for value in "$API_IMAGE" "$WEB_IMAGE"; do
+    [[ "$value" =~ ^[a-zA-Z0-9][a-zA-Z0-9._/@:-]+$ ]] || fail 'Invalid image reference'
+    if [[ "${CF_ALLOW_LOCAL_IMAGES:-0}" != 1 ]]; then
+      [[ "$value" =~ @sha256:[a-f0-9]{64}$ || "$value" =~ ^sha256:[a-f0-9]{64}$ ]] || fail 'Use digest-pinned images.lock.env from a published release'
+    fi
+  done
+}
+current_images() { load_images "$STATE_DIR/deployment/images.lock.env"; }
+pull_images() { for value in "$API_IMAGE" "$WEB_IMAGE"; do docker image inspect "$value" >/dev/null 2>&1 || docker pull --platform linux/amd64 "$value"; done; }
+ops() {
+  docker run --rm --init --network none --user 0:0 -e CF_HOST_UID="$(id -u)" -e CF_HOST_GID="$(id -g)" \
+    -v "$STATE_DIR:/state" "$API_IMAGE" node /opt/courseflow-tools/ops.mjs "$@"
+}
+modules() {
+  docker run --rm --init --network none -v "$STATE_DIR/data:/data" "$API_IMAGE" node /opt/courseflow-tools/ops.mjs "$@"
+}
+compose() {
+  docker compose -p "$PROJECT_NAME" --env-file "$STATE_DIR/deployment/settings.env" \
+    --env-file "$STATE_DIR/deployment/images.lock.env" -f "$STATE_DIR/deployment/compose.yaml" "$@"
+}
+prepare_deployment() {
+  local dest="$STATE_DIR/deployment.next"
+  rm -rf "$dest"; mkdir -p "$dest/security"
+  cp "$ROOT/compose.yaml" "$dest/compose.yaml"
+  cp "$ROOT/security/chromium-seccomp.json" "$dest/security/"
+  printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$API_IMAGE" "$WEB_IMAGE" > "$dest/images.lock.env"
+  printf 'PUBLIC_URL=%s\nWEB_PORT=%s\n' "$PUBLIC_URL" "$WEB_PORT" > "$dest/settings.env"
+  if [[ -d "$STATE_DIR/deployment" ]]; then rm -rf "$STATE_DIR/deployment"; fi
+  mv "$dest" "$STATE_DIR/deployment"
+}
+running() { compose ps --status running -q api | grep -q .; }
+healthy() { compose up -d --no-build --pull never --wait --wait-timeout "${CF_WAIT_TIMEOUT:-120}"; }
+rollback_update() {
+  local status=$?
+  trap - EXIT
+  if (( status!=0 )); then
+    printf '%s\n' 'Update failed; restoring the verified pre-update snapshot.' >&2
+    compose stop || true
+    API_IMAGE=$rollback_image
+    ops restore
+    current_images; pull_images
+    if healthy; then ops finish-restore; else printf '%s\n' 'Rollback failed. Snapshot and .failed-data retained for diagnosis.' >&2; fi
+  fi
+  exit "$status"
+}
+case "$COMMAND" in
+ doctor)
+  [[ $(uname -s) == Linux && $(uname -m) == x86_64 ]] || fail 'This release supports Linux amd64'
+  docker info >/dev/null; docker compose version
+  [[ -f "$ROOT/security/chromium-seccomp.json" ]] || fail 'Missing seccomp profile'
+  docker compose up --help | grep -q -- --wait || fail 'Upgrade Docker Compose: --wait is required'
+  if timeout 1 bash -c 'exec 3<>/dev/tcp/127.0.0.1/$1' _ "$WEB_PORT" 2>/dev/null; then
+    [[ -d "$STATE_DIR/deployment" ]] && [[ -n $(compose ps --status running -q web) ]] || fail "WEB_PORT $WEB_PORT is already in use"
+  fi
+  load_images "$IMAGES"
+  printf 'Configuration OK: %s (%s), state: %s\n' "$PROJECT_NAME" "$PUBLIC_URL" "$STATE_DIR"
+  ;;
+ init)
+  load_images "$IMAGES"; pull_images; ops prepare
+  modules init
+  [[ -d "$STATE_DIR/deployment" ]] || prepare_deployment
+  ;;
+ up)
+  [[ -d "$STATE_DIR/deployment" ]] || fail 'Run init first'
+  current_images; pull_images; healthy
+  ;;
+ down) compose down;;
+ status) compose ps;;
+ setup-code)
+  compose logs --no-color api | sed -n 's/.*管理员设置码：\([^[:space:]]*\).*/\1/p' | tail -1
+  ;;
+ backup)
+  current_images; was_running=0; if running; then was_running=1; fi
+  resume() { local result=$?; trap - EXIT; if (( was_running )); then healthy || result=1; fi; exit "$result"; }
+  trap resume EXIT
+  compose stop api; ops backup
+  ;;
+ update)
+  [[ $# == 1 ]] || fail 'update requires a release images.lock.env path'
+  next_lock=$(realpath "$1")
+  load_images "$next_lock"; pull_images
+  current_images; rollback_image=$API_IMAGE; compose stop api
+  # A backup error resumes the old service without replacing its existing backup.
+  if ! ops backup; then healthy; fail 'Backup verification failed; update cancelled'; fi
+  trap rollback_update EXIT
+  load_images "$next_lock"; modules upgrade-modules; prepare_deployment; healthy
+  ops inspect >/dev/null
+  trap - EXIT
+  ;;
+ restore)
+  if [[ -d "$STATE_DIR/deployment" ]]; then current_images; else load_images "$IMAGES"; pull_images; fi
+  ops verify-backup
+  if [[ -d "$STATE_DIR/deployment" ]]; then compose stop api; fi
+  ops restore; current_images; pull_images; healthy; ops finish-restore
+  ;;
+ export-backup)
+  [[ $# == 1 ]] || fail 'export-backup requires a private destination directory'
+  mkdir -p "$1"; dest=$(realpath "$1"); current_images
+  docker run --rm --network none --user 0:0 -e CF_HOST_UID="$(id -u)" -e CF_HOST_GID="$(id -g)" \
+    -v "$STATE_DIR:/state" -v "$dest:/export" "$API_IMAGE" node /opt/courseflow-tools/ops.mjs export
+  ;;
+ import-backup)
+  [[ $# == 1 ]] || fail 'import-backup requires a backup archive'
+  file=$(realpath "$1");load_images "$IMAGES";pull_images
+  docker run --rm --network none --user 0:0 -e CF_HOST_UID="$(id -u)" -e CF_HOST_GID="$(id -g)" \
+    -v "$STATE_DIR:/state" -v "$file:/import/backup.tgz:ro" "$API_IMAGE" node /opt/courseflow-tools/ops.mjs import
+  ;;
+ load)
+  [[ $# == 1 ]] || fail 'load requires an extracted offline release directory'
+  dir=$(realpath "$1"); (cd "$dir" && sha256sum -c SHA256SUMS && gzip -dc images.tar.gz | docker load)
+  printf 'Imported. Use CF_IMAGES_LOCK=%s/images.offline.env for init or update.\n' "$dir"
+  ;;
+ *) fail "Unknown command: $COMMAND";;
+esac
