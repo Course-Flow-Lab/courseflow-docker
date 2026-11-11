@@ -77,7 +77,7 @@ prepare_deployment() {
   mv "$dest" "$STATE_DIR/deployment"
 }
 running() { compose ps --status running -q api | grep -q .; }
-healthy() { compose up -d --no-build --pull never --wait --wait-timeout "${CF_WAIT_TIMEOUT:-120}"; }
+healthy() { compose up -d --no-build --pull never --wait --wait-timeout "${CF_WAIT_TIMEOUT:-120}" "$@"; }
 rollback_update() {
   local status=$?
   trap - EXIT
@@ -87,7 +87,7 @@ rollback_update() {
     API_IMAGE=$rollback_image
     ops restore
     current_images; pull_images
-    if healthy; then ops finish-restore; else printf '%s\n' 'Rollback failed. Snapshot and .failed-data retained for diagnosis.' >&2; fi
+    if healthy --force-recreate; then ops finish-restore; else printf '%s\n' 'Rollback failed. Snapshot and .failed-data retained for diagnosis.' >&2; fi
   fi
   exit "$status"
 }
@@ -139,7 +139,7 @@ case "$COMMAND" in
   if [[ -d "$STATE_DIR/deployment" ]]; then current_images; else load_images "$IMAGES"; pull_images; fi
   ops verify-backup
   if [[ -d "$STATE_DIR/deployment" ]]; then compose stop api; fi
-  ops restore; current_images; pull_images; healthy; ops finish-restore
+  ops restore; current_images; pull_images; healthy --force-recreate; ops finish-restore
   ;;
  export-backup)
   [[ $# == 1 ]] || fail 'export-backup requires a private destination directory'
