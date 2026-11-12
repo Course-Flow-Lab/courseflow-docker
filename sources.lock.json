@@ -1,5 +1,5 @@
 {
-  "release": "0.1.0",
+  "release": "0.1.1",
   "platform": "linux/amd64",
   "components": {
     "framework": {
@@ -8,7 +8,7 @@
     },
     "webui": {
       "repository": "Course-Flow-Lab/courseflow-webui",
-      "commit": "739f161bdeb467a8d72502c15841fa3898c91710"
+      "commit": "f5fd9fe2a603f391afc167644335cb6584ac83c8"
     },
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
@@ -16,7 +16,7 @@
     },
     "cx": {
       "repository": "Course-Flow-Lab/courseflow-chaoxing",
-      "commit": "f8a2b7852b17d6982174a67dc84620ef5e81cf4b"
+      "commit": "92a9926539050cedd4bed08e7ec2a40c9b8257b9"
     }
   },
   "base_images": {

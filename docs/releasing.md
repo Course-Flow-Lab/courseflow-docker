@@ -5,7 +5,7 @@
 本机构建需要 Docker、Python 3.12+ 及网络：
 
 ```sh
-python3 build/build.py --version v0.1.0
+python3 build/build.py --version v0.1.1
 python3 tests/smoke.py
 ```
 
@@ -19,7 +19,7 @@ CI 的 `check.yml` 在 main、Pull Request 和手动触发时运行完整构建�
 2. 创建并推送 `vX.Y.Z` 标签，或手动运行 `Release containers` 并填写版本。已经公开的版本不可覆盖，应使用新版本。
 3. 工作流重新验收，使用最小范围的 `GITHUB_TOKEN` 写入 GHCR 和 Release，无需存储个人 token。
 4. 首次创建 GHCR 包时，组织管理员需要在两个包的 Package settings 中把 visibility 设为 Public。GitHub 的新包默认私有，即使关联仓库已经公开。如果 Public 不可选，先由组织管理员在 Settings → Packages → Package creation 允许 Public。若因此匿名拉取失败，先改为公开，再重跑该发布工作流；未完成的 Release 保持草稿。
-5. 匿名拉取通过后，工作流公开 Release，包含在线部署包、离线镜像包、digest 锁文件、本地镜像 ID 锁文件、来源清单及 SHA-256。
+5. 匿名拉取通过后，工作流公开 Release，包含在线部署包、离线镜像包、digest 锁文件、离线镜像标签索引、来源清单及 SHA-256。离线本地镜像 ID 由目标机的 `load` 命令生成。
 6. 从已发布 Release 下载 `images.lock.env`，提交到 main，供新克隆的用户直接启动。不要手工猜测 digest，也不要让默认配置追踪 `latest`。
 
 镜像分别为 `ghcr.io/course-flow-lab/courseflow-api` 与 `ghcr.io/course-flow-lab/courseflow-webui`，镜像 source 标签关联此部署仓库。工作流中使用固定提交的 Actions；更新这些提交时仍应先通过完整验收。

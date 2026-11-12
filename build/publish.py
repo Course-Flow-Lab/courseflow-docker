@@ -16,7 +16,7 @@ for service,name in [('api','api'),('web','webui')]:
     image=json.loads(subprocess.check_output(['docker','image','inspect',remote]))[0]
     digest=next(x for x in image['RepoDigests'] if x.startswith(registry+'/courseflow-'+name+'@'))
     manifest['images'][service]={'tag':remote,'digest':digest,'id':image['Id']};refs.append(remote)
-for filename,key in [('images.lock.env','digest'),('images.offline.env','id')]:
+for filename,key in [('images.lock.env','digest'),('images.offline.env','tag')]:
     (dist/filename).write_text('API_IMAGE='+manifest['images']['api'][key]+'\nWEB_IMAGE='+manifest['images']['web'][key]+'\n')
 manifest['source_archives']=json.loads((root/'.build/context/source-archives.json').read_text())
 (dist/'release.json').write_text(json.dumps(manifest,indent=2)+'\n')
@@ -45,7 +45,7 @@ notes=dist/'release-notes.md';notes.write_text(f'''Courseflow Docker {version} f
 
 Download `courseflow-docker-{version}.tar.gz`, extract, copy `.env.example` to `.env`, set `PUBLIC_URL`, then run `./scripts/courseflow init` and `./scripts/courseflow up`.
 
-The offline bundle includes both images, immutable local image IDs and SHA-256 checksums. See `docs/offline.md`.
+The offline bundle includes both images and SHA-256 checksums. `load` creates an immutable image-ID lock on the destination Docker engine. See `docs/offline.md`.
 
 API and Web images are published to GitHub Packages. Existing data stays outside containers. Updates retain one verified backup per instance and automatically restore it on startup failure.
 

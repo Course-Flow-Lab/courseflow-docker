@@ -155,8 +155,18 @@ case "$COMMAND" in
   ;;
  load)
   [[ $# == 1 ]] || fail 'load requires an extracted offline release directory'
-  dir=$(realpath "$1"); (cd "$dir" && sha256sum -c SHA256SUMS && gzip -dc images.tar.gz | docker load)
-  printf 'Imported. Use CF_IMAGES_LOCK=%s/images.offline.env for init or update.\n' "$dir"
+  dir=$(realpath "$1")
+  (cd "$dir" && sha256sum -c SHA256SUMS && gzip -dc images.tar.gz | docker load)
+  unset API_IMAGE WEB_IMAGE
+  read_config "$dir/images.offline.env" images
+  [[ "${API_IMAGE:-}" =~ ^ghcr[.]io/course-flow-lab/courseflow-api:v[0-9]+[.][0-9]+[.][0-9]+$ ]] || fail 'Invalid offline API image tag'
+  [[ "${WEB_IMAGE:-}" =~ ^ghcr[.]io/course-flow-lab/courseflow-webui:v[0-9]+[.][0-9]+[.][0-9]+$ ]] || fail 'Invalid offline Web image tag'
+  api_id=$(docker image inspect --format '{{.Id}}' "$API_IMAGE")
+  web_id=$(docker image inspect --format '{{.Id}}' "$WEB_IMAGE")
+  [[ "$api_id" =~ ^sha256:[a-f0-9]{64}$ && "$web_id" =~ ^sha256:[a-f0-9]{64}$ ]] || fail 'Imported images lack local immutable IDs'
+  printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$api_id" "$web_id" > "$STATE_DIR/images.local.env.next"
+  mv "$STATE_DIR/images.local.env.next" "$STATE_DIR/images.local.env"
+  printf 'Imported. Use CF_IMAGES_LOCK=%s/images.local.env for init or update.\n' "$STATE_DIR"
   ;;
  *) fail "Unknown command: $COMMAND";;
 esac
