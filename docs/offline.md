@@ -3,7 +3,7 @@
 下载 Release 中 `linux-amd64-offline.tar.gz` 与外层 SHA256SUMS，验证后解压。包内包含 Docker 镜像、完整部署文件和镜像标签索引。`load` 会在目标 Docker 引擎中取得不可变镜像 ID。
 
 ```sh
-tar -xzf courseflow-docker-v0.1.1-linux-amd64-offline.tar.gz
+tar -xzf courseflow-docker-v0.1.2-linux-amd64-offline.tar.gz
 cd courseflow-docker
 cp .env.example .env
 # 修改 PUBLIC_URL 和实例目录
