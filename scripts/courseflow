@@ -77,7 +77,25 @@ prepare_deployment() {
   mv "$dest" "$STATE_DIR/deployment"
 }
 running() { compose ps --status running -q api | grep -q .; }
-healthy() { compose up -d --no-build --pull never --wait --wait-timeout "${CF_WAIT_TIMEOUT:-120}" "$@"; }
+healthy() {
+  local timeout=${CF_WAIT_TIMEOUT:-120} deadline service id status
+  [[ "$timeout" =~ ^[0-9]+$ ]] || fail 'CF_WAIT_TIMEOUT must be a number of seconds'
+  compose up -d --no-build --pull never --wait --wait-timeout "$timeout" "$@" || return 1
+  deadline=$((SECONDS+timeout))
+  for service in api web; do
+    id=$(compose ps -q "$service")
+    [[ -n "$id" ]] || { printf 'Service %s is missing\n' "$service" >&2; return 1; }
+    while :; do
+      status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$id") || return 1
+      [[ "$status" == healthy ]] && break
+      if [[ "$status" == unhealthy || $SECONDS -ge $deadline ]]; then
+        printf 'Service %s did not become healthy (%s)\n' "$service" "$status" >&2
+        return 1
+      fi
+      sleep 1
+    done
+  done
+}
 rollback_update() {
   local status=$?
   trap - EXIT
