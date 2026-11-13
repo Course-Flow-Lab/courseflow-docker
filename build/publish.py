@@ -41,15 +41,15 @@ offline=dist/f'courseflow-docker-{version}-linux-amd64-offline.tar.gz'
 with tarfile.open(offline,'w:gz',compresslevel=1) as tar:tar.add(package,arcname='courseflow-docker')
 assets=[online,offline,dist/'images.lock.env',dist/'images.offline.env',dist/'release.json']
 (dist/'SHA256SUMS').write_text(''.join(sha(p)+'  '+p.name+'\n' for p in assets));assets.append(dist/'SHA256SUMS')
-notes=dist/'release-notes.md';notes.write_text(f'''Courseflow Docker {version} for Linux amd64.
+notes=dist/'release-notes.md';notes.write_text(f'''Courseflow Docker {version}（Linux amd64）。
 
-Download `courseflow-docker-{version}.tar.gz`, extract, copy `.env.example` to `.env`, set `PUBLIC_URL`, then run `./scripts/courseflow init` and `./scripts/courseflow up`.
+下载并解压 `courseflow-docker-{version}.tar.gz`，将 `.env.example` 复制为 `.env`，设置 `PUBLIC_URL`，依次执行 `./scripts/courseflow init` 和 `./scripts/courseflow up`。
 
-The offline bundle includes both images and SHA-256 checksums. `load` creates an immutable image-ID lock on the destination Docker engine. See `docs/offline.md`.
+离线包包含 API、WebUI 镜像和 SHA-256 校验文件；`load` 在目标 Docker 上生成不可变的本地镜像 ID 锁文件，详见 `docs/offline.md`。
 
-API and Web images are published to GitHub Packages. Existing data stays outside containers. Updates retain one verified backup per instance and automatically restore it on startup failure.
+API 与 WebUI 镜像发布到 GHCR，正式版本同时更新两个镜像的 `latest` 标签。已有部署可先更新部署仓库，再运行 `./scripts/courseflow update latest`；也可传入本次发布的 `images.lock.env` 升级到指定版本。
 
-Source revisions and image digests are recorded in `release.json`. CI runs offline module contracts and deployment/restore tests; real platform accounts are not exercised.
+数据保存在容器之外，更新时保留一份已验证备份，启动失败自动回退。`release.json` 记录源码提交与镜像 digest。CI 使用离线模块契约及部署、恢复测试，不使用真实平台账号。
 ''')
 if existing.returncode:
     subprocess.run(['gh','release','create',version,'--repo',repo,'--target',os.environ.get('GITHUB_SHA','main'),'--title','Courseflow Docker '+version,'--notes-file',str(notes),'--draft'],check=True)
