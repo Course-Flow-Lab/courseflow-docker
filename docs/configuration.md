@@ -17,6 +17,6 @@ API 使用 Node 24、Python `/opt/cx-venv/bin/python`、Chromium `/usr/bin/chrom
 
 首次安装默认启用智慧树与超星的 live 模式。额外模块可上传到 STATE_DIR/data 下，再在管理员“平台模块”页面填写容器内 `/data/...` 路径安装，后续容器更新会保留该模块。
 
-U校园模块可从 [courseflow-uai](https://github.com/Course-Flow-Lab/courseflow-uai) 构建并安装。其 ID 是 `unipus`，需要显式选择 `source=live`，并填写 course_id、book_id、book_version；这些是模块全局配置。它不是本发行版默认预装组件。
+U校园等可选模块可从 [模块下载页](https://course-flow-lab.github.io/courseflow-docker/) 获取可直接安装的 `.tgz`，详见 [模块安装手册](modules.md)。U校园的 ID 是 `unipus`，使用 `source=live` 后按当前账号读取课程，不需要填写全局课程、教材或单元编号。它不是本发行版默认预装组件。
 
 日志有大小上限；不要将含设置码、Cookie 或令牌的日志上传到公开 issue。设置码只在管理员创建前有效。
