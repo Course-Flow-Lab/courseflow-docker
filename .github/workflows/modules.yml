@@ -7,9 +7,11 @@ on:
       - sources.lock.json
       - images.lock.env
       - build/package-modules.py
+      - build/publish-module-release.py
       - build/modules.Dockerfile
       - tests/modules-contract.mjs
       - tests/modules-pack.py
+      - tests/module-releases.py
       - .github/workflows/modules.yml
   workflow_dispatch:
 permissions:
@@ -22,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     environment:
@@ -37,6 +39,7 @@ jobs:
       - name: Download locked public module sources
         run: |
           python3 tests/modules-pack.py
+          python3 tests/module-releases.py
           python3 build/package-modules.py prepare
       - id: images
         run: |
@@ -71,6 +74,10 @@ jobs:
             -v "$PWD/tests/modules-contract.mjs:/check.mjs:ro" \
             -v "$PWD/.build/modules/source/cx:/cx-tests:ro" \
             "$API_IMAGE" node /check.mjs
+      - name: Archive verified module files in GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 build/publish-module-release.py
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
       - uses: actions/upload-pages-artifact@5f327015a708106f6f1b7c9a633901af30fe80cb
         with:

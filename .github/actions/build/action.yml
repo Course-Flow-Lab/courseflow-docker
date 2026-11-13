@@ -19,6 +19,7 @@ runs:
       run: |
         python3 tests/latest.py
         python3 tests/modules-pack.py
+        python3 tests/module-releases.py
     - name: Export pinned sources
       shell: bash
       run: python3 build/prepare.py

@@ -1,6 +1,6 @@
 # 平台模块下载与安装
 
-模块下载页：**[Courseflow 模块下载](https://course-flow-lab.github.io/courseflow-docker/)**。页面列出版本、源码提交、SHA-256 校验值、框架要求和对应 `.tgz` 文件。包内使用 `package/` 根目录，可直接交给框架安装，无需解压或在服务器上编译。
+模块下载页：**[Courseflow 模块下载](https://course-flow-lab.github.io/courseflow-docker/)**。页面列出版本、源码提交、SHA-256 校验值、框架要求和对应 `.tgz` 文件。也可从 [GitHub Releases](https://github.com/Course-Flow-Lab/courseflow-docker/releases) 下载标题为「平台模块安装包」的附件；每批文件按内容校验值独立留档。包内使用 `package/` 根目录，可直接交给框架安装，无需解压或在服务器上编译。
 
 | 模块 | 编号 | 运行环境 | Docker 发行版 |
 | --- | --- | --- | --- |
@@ -59,6 +59,6 @@ npm run cli -- module list
 
 ## 发布维护
 
-`module-sources.lock.json` 固定可发布模块的源码提交。维护者更新对应提交并推送 main 后，`Publish module downloads` 工作流会重新构建智慧树、打包 U校园、收集超星源码及依赖清单，生成版本化包和 SHA-256，并在禁用网络的 API 容器中实际安装、握手、登录和读取合成课程，全部通过后部署 GitHub Pages。也可手动触发工作流。
+`module-sources.lock.json` 固定可发布模块的源码提交。维护者更新对应提交并推送 main 后，`Publish module downloads` 工作流会重新构建智慧树、打包 U校园、收集超星源码及依赖清单，生成版本化包和 SHA-256，并在禁用网络的 API 容器中实际安装、握手、登录和读取合成课程。全部通过后，先在本仓库创建 `modules-<内容标识>` Release，回下载验证附件，再部署相同文件到 GitHub Pages。也可手动触发工作流。
 
-文件名包含模块版本、目标环境和源码提交，页面的 `catalog.json` 提供机器可读目录。Pages 展示锁文件中当前推荐版本；需要长期保留某个版本时，应保存下载包及校验文件。
+文件名包含模块版本、目标环境和源码提交，页面的 `catalog.json` 提供机器可读目录。Pages 展示当前推荐版本；旧包可从历史模块 Release 下载。相同内容重复发布会验证并复用已有 Release，已公开的附件不会覆盖。模块 Release 不改变 Docker 容器版本的 Latest 标记。
