@@ -29,12 +29,15 @@ cp .env.example .env
 ./scripts/courseflow status
 ./scripts/courseflow backup
 ./scripts/courseflow export-backup /你的私有离机目录
+./scripts/courseflow update latest
 ./scripts/courseflow update /新发布/images.lock.env
 ./scripts/courseflow restore
 ./scripts/courseflow down
 ```
 
 运行数据默认位于 `~/.local/share/courseflow-docker`，独立于仓库。设置 `STATE_DIR` 可选择其他绝对路径。`down` 只移除本实例的容器和网络，数据保留。初始化可重复执行；遇到已有但无法识别的数据目录会停止，不会重新生成密钥。
+
+每次正式发布都会更新 `ghcr.io/course-flow-lab/courseflow-api:latest` 和 `ghcr.io/course-flow-lab/courseflow-webui:latest`。`update latest` 主动拉取两个镜像，核对属于同一版本，再解析为固定 digest，执行备份、模块更新和健康检查；失败时回退。执行前先 `git pull --ff-only` 更新本部署仓库。固定版本升级仍可传入 Release 的 `images.lock.env`。
 
 每个实例只保留 **一份** 已验证备份 `backups/latest`；离机导出使用固定文件名 `courseflow-backup.tgz`，校验成功后替换上一份。备份会短暂停止 API；运行中的任务会暂停，恢复后需人工确认再继续。请阅读 [备份与恢复](docs/backup.md)。
 

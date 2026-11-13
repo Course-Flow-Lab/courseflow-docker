@@ -6,7 +6,7 @@ COMMAND=${1:-help}; shift || true
 fail() { printf '%s\n' "$*" >&2; exit 1; }
 if [[ "$COMMAND" == help || "$COMMAND" == --help ]]; then
   printf '%s\n' 'Usage: scripts/courseflow doctor|init|up|down|status|setup-code|backup|restore' \
-    '       scripts/courseflow update /path/to/images.lock.env' \
+    '       scripts/courseflow update latest|/path/to/images.lock.env' \
     '       scripts/courseflow export-backup /private/offsite/directory' \
     '       scripts/courseflow import-backup /path/to/courseflow-backup.tgz' \
     '       scripts/courseflow load /path/to/offline-release-directory'
@@ -55,6 +55,25 @@ load_images() {
 }
 current_images() { load_images "$STATE_DIR/deployment/images.lock.env"; }
 pull_images() { for value in "$API_IMAGE" "$WEB_IMAGE"; do docker image inspect "$value" >/dev/null 2>&1 || docker pull --platform linux/amd64 "$value"; done; }
+resolve_latest() {
+  local name ref version release= pin line api_pin web_pin
+  for name in api webui; do
+    ref="ghcr.io/course-flow-lab/courseflow-$name:latest"
+    # latest 是可变标签，必须真正拉取，不能沿用本地缓存。
+    docker pull --platform linux/amd64 "$ref"
+    version=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$ref")
+    [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail 'latest 缺少正式发布版本标签'
+    [[ -z "$release" || "$release" == "$version" ]] || fail 'latest 镜像版本暂不一致，请稍后重试'
+    release=$version; pin=
+    while IFS= read -r line; do
+      if [[ "$line" == "${ref%:latest}@sha256:"* ]]; then pin=$line; break; fi
+    done < <(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$ref")
+    [[ "$pin" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'latest 镜像缺少可验证的 digest'
+    if [[ "$name" == api ]]; then api_pin=$pin; else web_pin=$pin; fi
+  done
+  printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$api_pin" "$web_pin" > "$STATE_DIR/images.latest.env.next"
+  mv "$STATE_DIR/images.latest.env.next" "$STATE_DIR/images.latest.env"
+}
 ops() {
   docker run --rm --init --network none --user 0:0 -e CF_HOST_UID="$(id -u)" -e CF_HOST_GID="$(id -g)" \
     -v "$STATE_DIR:/state" "$API_IMAGE" node /opt/courseflow-tools/ops.mjs "$@"
@@ -142,8 +161,12 @@ case "$COMMAND" in
   compose stop api; ops backup
   ;;
  update)
-  [[ $# == 1 ]] || fail 'update requires a release images.lock.env path'
-  next_lock=$(realpath "$1")
+  [[ $# == 1 ]] || fail 'update requires latest or a release images.lock.env path'
+  if [[ "$1" == latest ]]; then
+    resolve_latest; next_lock="$STATE_DIR/images.latest.env"
+  else
+    next_lock=$(realpath "$1")
+  fi
   load_images "$next_lock"; pull_images
   current_images; rollback_image=$API_IMAGE; compose stop api
   # A backup error resumes the old service without replacing its existing backup.
