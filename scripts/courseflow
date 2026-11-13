@@ -7,6 +7,7 @@ fail() { printf '%s\n' "$*" >&2; exit 1; }
 if [[ "$COMMAND" == help || "$COMMAND" == --help ]]; then
   printf '%s\n' 'Usage: scripts/courseflow doctor|init|up|down|status|setup-code|backup|restore' \
     '       scripts/courseflow update latest|/path/to/images.lock.env' \
+    '       scripts/courseflow module install /path/to/module.tgz' \
     '       scripts/courseflow export-backup /private/offsite/directory' \
     '       scripts/courseflow import-backup /path/to/courseflow-backup.tgz' \
     '       scripts/courseflow load /path/to/offline-release-directory'
@@ -129,6 +130,19 @@ rollback_update() {
   exit "$status"
 }
 case "$COMMAND" in
+ module)
+  [[ $# == 2 && "$1" == install ]] || fail 'Usage: module install /path/to/module.tgz'
+  package=$(realpath "$2"); [[ -f "$package" && -r "$package" ]] || fail '模块安装包不存在或不可读'
+  current_images; pull_images; rollback_image=$API_IMAGE
+  compose stop api
+  if ! ops backup; then healthy; fail '备份验证失败，已取消模块安装'; fi
+  trap rollback_update EXIT
+  docker run --rm -i --init --network none -v "$STATE_DIR/data:/data" \
+    -v "$ROOT/scripts/module-install.mjs:/tmp/courseflow-module-install.mjs:ro" \
+    "$API_IMAGE" node /tmp/courseflow-module-install.mjs < "$package"
+  healthy; ops inspect >/dev/null
+  trap - EXIT
+  ;;
  doctor)
   [[ $(uname -s) == Linux && $(uname -m) == x86_64 ]] || fail 'This release supports Linux amd64'
   docker info >/dev/null; docker compose version

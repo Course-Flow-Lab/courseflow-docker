@@ -44,6 +44,7 @@ cp .env.example .env
 ## 文档
 
 - [配置与平台模块](docs/configuration.md)
+- [模块下载与安装](docs/modules.md)（[直接下载 .tgz](https://course-flow-lab.github.io/courseflow-docker/)）
 - [更新和失败回退](docs/upgrade.md)
 - [备份、离机副本和迁移](docs/backup.md)
 - [离线安装](docs/offline.md)

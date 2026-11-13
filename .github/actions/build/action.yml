@@ -16,7 +16,9 @@ runs:
       run: python3 tests/offline-load.py
     - name: Latest publication and update contracts
       shell: bash
-      run: python3 tests/latest.py
+      run: |
+        python3 tests/latest.py
+        python3 tests/modules-pack.py
     - name: Export pinned sources
       shell: bash
       run: python3 build/prepare.py

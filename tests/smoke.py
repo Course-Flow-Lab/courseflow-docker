@@ -45,8 +45,12 @@ try:
   for f in sim.iterdir():tar.add(f,arcname=f.name)
  cid=run(['docker','ps','-q','--filter','label=com.docker.compose.project='+project,'--filter','label=com.docker.compose.service=api']).strip()
  run(['docker','exec',cid,'node','--input-type=module','-e',"import dns from 'node:dns/promises'; await dns.lookup('web'); const r=await fetch('https://github.com',{signal:AbortSignal.timeout(20000)}); if(!r.ok)process.exit(1)"])
- run(['docker','cp',str(archive),cid+':/data/sim.tgz'])
- request('/api/modules/install','POST',{'path':'/data/sim.tgz'})
+ run(cli+['module','install',str(archive)])
+ assert any(module['id']=='sim' for module in request('/api/modules')[0]['modules'])
+ broken=work/'invalid-module.tgz';broken.write_bytes(b'not a tar archive')
+ run(cli+['module','install',str(broken)],ok=False)
+ assert request('/healthz')[0]['status']=='ok'
+ assert any(module['id']=='sim' for module in request('/api/modules')[0]['modules'])
  for mod in ['cx','zhs']:
   request('/api/modules/'+mod+'/config','POST',{'settings':{'source':'fixture',**({'python':'/opt/cx-venv/bin/python'} if mod=='cx' else {})}})
  for mod in ['cx','zhs','sim']:
@@ -67,6 +71,7 @@ try:
  request('/api/admin/users',status=403)
  request('/api/auth/logout','POST',{})
  csrf=request('/api/auth/login','POST',{'username':'smoke-admin','password':password})[0]['csrf']
+ cid=run(['docker','ps','-q','--filter','label=com.docker.compose.project='+project,'--filter','label=com.docker.compose.service=api']).strip()
  run(['docker','cp',str(root/'tests/browser.mjs'),cid+':/tmp/browser.mjs'])
  run(['docker','exec',cid,'node','/tmp/browser.mjs'])
  run(cli+['backup']);before=json.loads((state/'backups/latest/metadata.json').read_text())['data']
@@ -92,7 +97,7 @@ try:
  run(cli+['restore'],env_override=recovery_env)
  assert request('/healthz')[0]['status']=='ok';assert len(request('/api/admin/users')[0]['users'])==2
  run(cli+['down'],env_override=recovery_env)
- print('PASS: initialization, HTTP auth/CSRF/admin, three module contracts, encoded routes, downloads, Chromium sandbox, update failure rollback, corrupt backup rejection and offsite recovery')
+ print('PASS: initialization, HTTP auth/CSRF/admin, local module package installation and rollback, three module contracts, encoded routes, downloads, Chromium sandbox, update failure rollback, corrupt backup rejection and offsite recovery')
 finally:
  subprocess.run(cli+['down'],env=env,cwd=root,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  # All mounts are dedicated synthetic test directories.

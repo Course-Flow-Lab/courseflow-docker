@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "modules": {
+    "zhs": {
+      "repository": "Course-Flow-Lab/courseflow-zhs",
+      "commit": "6f0c8e62c007a55a8fbf3ba740abb612beffe366",
+      "target": "linux-x64",
+      "requirements": "Linux amd64，glibc 2.36 或更新版本"
+    },
+    "cx": {
+      "repository": "Course-Flow-Lab/courseflow-chaoxing",
+      "commit": "37d7115cfa550a1b55290c2e7ed981e0817f96fb",
+      "target": "python3",
+      "requirements": "Python 3.11+；需安装包内 requirements.txt"
+    },
+    "unipus": {
+      "repository": "Course-Flow-Lab/courseflow-uai",
+      "commit": "867321338ff1b71f83bbb4dccf173e1aee62edc8",
+      "target": "node24",
+      "requirements": "Node.js 24+；live 模式需要 Chromium"
+    }
+  }
+}
