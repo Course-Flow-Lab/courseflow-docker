@@ -14,6 +14,9 @@ runs:
     - name: Offline image lock portability
       shell: bash
       run: python3 tests/offline-load.py
+    - name: Latest publication and update contracts
+      shell: bash
+      run: python3 tests/latest.py
     - name: Export pinned sources
       shell: bash
       run: python3 build/prepare.py
