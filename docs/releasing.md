@@ -5,7 +5,7 @@
 本机构建需要 Docker、Python 3.12+ 及网络：
 
 ```sh
-python3 build/build.py --version v0.1.4
+python3 build/build.py --version v0.1.5
 python3 tests/smoke.py
 ```
 
