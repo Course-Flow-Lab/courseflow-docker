@@ -1,14 +1,14 @@
 {
-  "release": "0.1.6",
+  "release": "0.1.7",
   "platform": "linux/amd64",
   "components": {
     "framework": {
       "repository": "Course-Flow-Lab/courseflow-framework",
-      "commit": "59250e0105597021482d264aab7f75c892ffa926"
+      "commit": "406a4aaa03ee4a53ffa2ac4f50f3ed7153272ab4"
     },
     "webui": {
       "repository": "Course-Flow-Lab/courseflow-webui",
-      "commit": "3fdf17d28713284dcb59392a1a9d1a25229d6e72"
+      "commit": "aa49e9e6797a9341ac68a598987124ec135deb21"
     },
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
