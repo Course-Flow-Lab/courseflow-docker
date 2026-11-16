@@ -1,5 +1,5 @@
 {
-  "release": "0.1.5",
+  "release": "0.1.6",
   "platform": "linux/amd64",
   "components": {
     "framework": {
@@ -12,7 +12,7 @@
     },
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
-      "commit": "648e79d711b2475921b725fc597f83d7eaff66a9"
+      "commit": "361d54aac6b6d9d0bc1137c808e969fb454ca8da"
     },
     "cx": {
       "repository": "Course-Flow-Lab/courseflow-chaoxing",
