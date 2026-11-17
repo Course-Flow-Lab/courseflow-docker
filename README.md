@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Course-Flow-Lab/courseflow-docker/actions/workflows/check.yml/badge.svg)](https://github.com/Course-Flow-Lab/courseflow-docker/actions/workflows/check.yml)
 
-Courseflow 的即用部署入口：API + Web 两个容器，内置智慧树与超星模块、Chromium 和 Python 环境。使用者只需 **Linux amd64、Docker Engine、Docker Compose v2、Bash 与 flock（util-linux）**，无需安装 Node、Rust 或 Python。
+Courseflow 的即用部署入口：API、Web 与内部验证码服务三个容器（复用两个发行镜像），内置智慧树与超星模块、Chromium 和 Python 环境。使用者只需 **Linux amd64、Docker Engine、Docker Compose v2、Bash 与 flock（util-linux）**，无需安装 Node、Rust 或 Python。
 
 ## 快速开始
 
@@ -22,6 +22,8 @@ cp .env.example .env
 远端部署时，将现有 HTTPS 反向代理指向 `127.0.0.1:8100`，并把 `.env` 的 `PUBLIC_URL` 设置为浏览器实际使用的 HTTPS 源地址。参考 [Nginx 示例](examples/nginx.conf)。网关默认仅绑定回环；API 不发布宿主端口。
 
 `images.lock.env` 固定已发布镜像 digest，来源为 [GitHub Packages](https://github.com/orgs/Course-Flow-Lab/packages?repo_name=courseflow-docker)。也可从 [Releases](https://github.com/Course-Flow-Lab/courseflow-docker/releases) 下载带锁文件的部署包或完整离线包。
+
+0.1.8 包含 Framework 0.1.13、WebUI 0.1.3 和 ZHS 0.3.8，提供团队多账号及共享课拼图验证。验证码服务预装 ddddocr 1.5.6，只在内部网络提供识别；数据库升级和回退要求见[更新说明](docs/upgrade.md)。
 
 ## 日常使用
 

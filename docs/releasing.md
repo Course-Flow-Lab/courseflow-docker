@@ -1,17 +1,17 @@
 # 维护者构建与发布
 
-`sources.lock.json` 固定四个应用仓库的完整提交和三个基础镜像 digest。构建仅下载这些公开提交的归档，不读取开发者相邻工作树、运行数据或账号。首版为 Linux amd64，运行镜像与部署版本一起发布。
+`sources.lock.json` 固定四个应用仓库的完整提交和四个基础镜像 digest（Node、Rust、Nginx、Python 3.12）。构建仅下载这些公开提交的归档，不读取开发者相邻工作树、运行数据或账号。首版为 Linux amd64，运行镜像与部署版本一起发布。
 
 本机构建需要 Docker、Python 3.12+ 及网络：
 
 ```sh
-python3 build/build.py --version v0.1.7
+python3 build/build.py --version v0.1.8
 python3 tests/smoke.py
 ```
 
 源码归档 SHA-256 记录在 `.build/context/source-archives.json`。固定源码和基础镜像不等于逐字节可重现：Debian 安全更新和 Python 间接依赖仍由构建时的软件源提供；最终发布的镜像 digest 才是部署使用的准确产物标识。
 
-CI 的 `check.yml` 在 main、Pull Request 和手动触发时运行完整构建及验收。后端测试入口先断言智慧树二进制和超星 Python 依赖存在，再执行全部 `.test.ts` 和 `.test.mjs`，并拒绝跳过测试；同时运行 WebUI 检查、测试和构建、Rust locked 测试以及超星 unittest。容器验收覆盖登录、Cookie、CSRF、编码路径、下载、模块 fixture、Chromium 沙箱、幂等初始化、备份损坏、更新失败回退和离机恢复。它只使用临时合成数据。
+CI 的 `check.yml` 在 main、Pull Request 和手动触发时运行完整构建及验收。后端测试镜像构建时运行类型检查和 Python 图片识别测试；随后以正式 Chromium seccomp 配置运行全部后端测试，避免在构建器里关闭浏览器沙箱。后端测试入口先断言智慧树二进制和超星 Python 依赖存在，再执行全部 `.test.ts` 和 `.test.mjs`，并拒绝跳过测试；同时运行 WebUI 检查、测试和构建、Rust locked 测试以及超星 unittest。容器验收覆盖登录、Cookie、CSRF、编码路径、下载、模块 fixture、Chromium 沙箱、幂等初始化、备份损坏、更新失败回退和离机恢复。它只使用临时合成数据。
 
 发布步骤：
 
