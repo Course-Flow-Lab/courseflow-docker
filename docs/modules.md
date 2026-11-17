@@ -7,8 +7,9 @@
 | 智慧树 | `zhs` | Linux amd64，glibc ≥ 2.36，Chromium | 已预装，通常无需重复安装 |
 | 超星学习通 | `cx` | Python ≥ 3.11、包内 `requirements.txt` 的依赖 | 已预装，Python 为 `/opt/cx-venv/bin/python` |
 | U校园 | `unipus` | Node.js ≥ 24，Chromium；作答功能需要配置模型 | 可选模块，默认不预装 |
+| 山东省教师教育网 | `qlteacher` | Node.js ≥ 24；测验自动作答需要配置模型 | 可选模块，默认不预装 |
 
-智慧树预编译包适用于当前 Docker 发行版、Debian 12 或更新版本等兼容系统；ARM、Alpine 等环境需自行从页面关联的固定源码编译。超星与 U校园包本身不绑定 CPU 架构，但依赖的 Python、Node 和浏览器需要匹配服务器。统一题库已内置在框架中，不另装为平台模块。
+智慧树预编译包适用于当前 Docker 发行版、Debian 12 或更新版本等兼容系统；ARM、Alpine 等环境需自行从页面关联的固定源码编译。超星、U校园与 QLTeacher 包本身不绑定 CPU 架构，但依赖的 Python、Node 和浏览器需要匹配服务器。QLTeacher 要求 Framework ≥ 0.1.13，没有额外 npm 运行时依赖。统一题库已内置在框架中，不另装为平台模块。
 
 ## 下载并校验
 
@@ -39,6 +40,8 @@ git pull --ff-only
 
 安装后在「站点管理 → 平台模块」查看版本与状态，再到「平台连接」登录。U校园可使用 `{ "source": "live" }`，课程会按账号自动读取，无需填写课程、教材或单元编号。Docker 中手动配置超星时使用 `{ "source": "live", "python": "/opt/cx-venv/bin/python" }`。智慧树使用 `{ "source": "live" }`。
 
+QLTeacher 使用账号密码登录，设置示例为 `{ "source": "live", "project_id": "cz2026" }`。请把项目编号换成官方网页 `/project/<项目编号>/lesson/learn` 中自己的实际编号；多项目可添加 `project_ids` 数组。课程学习和课程测验分别创建任务，测验自动作答需要在框架中配置模型。详细行为和限制见 [QLTeacher 模块说明](https://github.com/Course-Flow-Lab/courseflow-qlteacher#readme)。
+
 也可把包放到 `STATE_DIR/data` 下的可读目录，再在管理员模块页面填写对应的 `/data/...tgz` 路径。网页当前支持服务器本地路径，不支持直接粘贴下载 URL 或从浏览器上传文件。
 
 Docker 镜像更新会保留额外安装的模块；内置的智慧树和超星在镜像所固定的源码提交改变时，仍会按发行版升级内置版本。安装前可先执行 `./scripts/courseflow export-backup /私有离机目录` 保留站点备份。
@@ -59,6 +62,6 @@ npm run cli -- module list
 
 ## 发布维护
 
-`module-sources.lock.json` 固定可发布模块的源码提交。维护者更新对应提交并推送 main 后，`Publish module downloads` 工作流会重新构建智慧树、打包 U校园、收集超星源码及依赖清单，生成版本化包和 SHA-256，并在禁用网络的 API 容器中实际安装、握手、登录和读取合成课程。全部通过后，先在本仓库创建 `modules-<内容标识>` Release，回下载验证附件，再部署相同文件到 GitHub Pages。也可手动触发工作流。
+`module-sources.lock.json` 固定可发布模块的源码提交。维护者更新对应提交并推送 main 后，`Publish module downloads` 工作流会重新构建智慧树、打包 U校园、收集超星源码及依赖清单、测试并打包 QLTeacher，生成版本化包和 SHA-256，并在禁用网络的 API 容器中实际安装、握手、登录和读取合成课程。全部通过后，先在本仓库创建 `modules-<内容标识>` Release，回下载验证附件，再部署相同文件到 GitHub Pages。也可手动触发工作流。
 
 文件名包含模块版本、目标环境和源码提交，页面的 `catalog.json` 提供机器可读目录。Pages 展示当前推荐版本；旧包可从历史模块 Release 下载。相同内容重复发布会验证并复用已有 Release，已公开的附件不会覆盖。模块 Release 不改变 Docker 容器版本的 Latest 标记。

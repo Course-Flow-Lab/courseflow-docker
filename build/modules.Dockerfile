@@ -12,6 +12,12 @@ RUN npm ci
 COPY unipus/ ./
 RUN npm run build && node --check index.mjs
 
+FROM ${NODE_IMAGE} AS qlteacher
+WORKDIR /build/qlteacher
+COPY qlteacher/ ./
+RUN node --test test/html.test.mjs test/module.test.mjs test/platform.test.mjs
+
 FROM scratch AS artifacts
 COPY --from=zhs /build/zhs/target/release/courseflow-zhs /zhs/target/release/courseflow-zhs
 COPY --from=unipus /build/unipus/index.mjs* /unipus/
+COPY --from=qlteacher /build/qlteacher/index.mjs /qlteacher/
