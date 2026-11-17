@@ -18,4 +18,6 @@ for target,name,file in [('test','api-tests','api.Dockerfile'),('runtime','api',
     cmd=common+['-t',args.prefix+'-'+name+':'+args.version,'-f',str(context/file)]
     if target:cmd+=['--target',target]
     subprocess.run(cmd+[str(context)],env=env,check=True)
+    if target=='test':
+        subprocess.run(['docker','run','--rm','--network','none','--security-opt','seccomp='+str(root/'security/chromium-seccomp.json'),args.prefix+'-'+name+':'+args.version,'node','/check/test-source.mjs'],check=True)
 (root/'.build/images.lock.env').write_text('API_IMAGE='+args.prefix+'-api:'+args.version+'\nWEB_IMAGE='+args.prefix+'-webui:'+args.version+'\n')

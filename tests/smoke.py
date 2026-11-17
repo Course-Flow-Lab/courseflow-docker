@@ -44,6 +44,9 @@ try:
  with tarfile.open(archive,'w:gz') as tar:
   for f in sim.iterdir():tar.add(f,arcname=f.name)
  cid=run(['docker','ps','-q','--filter','label=com.docker.compose.project='+project,'--filter','label=com.docker.compose.service=api']).strip()
+ run(['docker','exec',cid,'node','--input-type=module','-e',"const h=await (await fetch(process.env.CF_CAPTCHA_URL+'/health')).json();if(h.status!=='ok')process.exit(1)"])
+ run(['docker','cp',str(root/'tests/captcha.mjs'),cid+':/tmp/captcha.mjs'])
+ run(['docker','exec',cid,'node','/tmp/captcha.mjs'])
  run(['docker','exec',cid,'node','--input-type=module','-e',"import dns from 'node:dns/promises'; await dns.lookup('web'); const r=await fetch('https://github.com',{signal:AbortSignal.timeout(20000)}); if(!r.ok)process.exit(1)"])
  run(cli+['module','install',str(archive)])
  assert any(module['id']=='sim' for module in request('/api/modules')[0]['modules'])

@@ -1,5 +1,10 @@
 ARG NODE_IMAGE
 ARG RUST_IMAGE
+ARG PYTHON_IMAGE
+FROM ${PYTHON_IMAGE} AS captcha-build
+COPY framework/support/captcha/requirements.txt /tmp/captcha-requirements.txt
+RUN python -m venv /opt/captcha-venv && /opt/captcha-venv/bin/pip install --no-cache-dir -r /tmp/captcha-requirements.txt
+
 FROM ${RUST_IMAGE} AS zhs-build
 WORKDIR /build/zhs
 COPY courseflow-zhs/ ./
@@ -14,7 +19,11 @@ FROM node-deps AS production-deps
 RUN npm prune --omit=dev
 
 FROM ${NODE_IMAGE} AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates chromium fonts-noto-cjk python3 python3-venv tar && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates chromium fonts-noto-cjk python3 python3-venv libgomp1 tar && rm -rf /var/lib/apt/lists/*
+COPY --from=captcha-build /usr/local /usr/local
+COPY --from=captcha-build /opt/captcha-venv /opt/captcha-venv
+RUN ldconfig
+COPY framework/support/captcha/server.py /opt/courseflow-captcha/server.py
 COPY courseflow-chaoxing/requirements.txt /opt/cx-requirements.txt
 RUN python3 -m venv /opt/cx-venv && /opt/cx-venv/bin/pip install --no-cache-dir -r /opt/cx-requirements.txt
 WORKDIR /app
@@ -57,4 +66,4 @@ RUN chown -R node:node /check && chmod -R u+rX /check
 USER node
 ENV CF_CX_PYTHON=/opt/cx-venv/bin/python PYTHONDONTWRITEBYTECODE=1
 WORKDIR /check/courseflow-framework
-RUN npm run typecheck && node ../test-source.mjs && cd ../courseflow-chaoxing && python -m unittest discover -s tests -v
+RUN npm run typecheck && /opt/captcha-venv/bin/python -m unittest discover -s support/captcha -p test_server.py -v && cd ../courseflow-chaoxing && /opt/cx-venv/bin/python -m unittest discover -s tests -v

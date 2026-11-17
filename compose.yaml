@@ -14,6 +14,11 @@ services:
       CF_DATA_DIR: /data
       CF_CHROMIUM: /usr/bin/chromium
       CF_LOG: info
+      CF_CAPTCHA_URL: http://captcha:8190
+    depends_on:
+      captcha:
+        condition: service_healthy
+        restart: true
     volumes:
       - type: bind
         source: ${STATE_DIR:?Use scripts/courseflow}/data
@@ -25,6 +30,28 @@ services:
       - seccomp=./security/chromium-seccomp.json
     healthcheck:
       test: [CMD, node, --input-type=module, -e, "const r=await fetch('http://127.0.0.1:8101/healthz');const h=await r.json();if(!r.ok||h.status!=='ok'||h.web_api_version!==1)process.exit(1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  captcha:
+    image: ${API_IMAGE:?Select a release lock file}
+    pull_policy: never
+    platform: linux/amd64
+    init: true
+    restart: unless-stopped
+    mem_limit: 512m
+    command: [/opt/captcha-venv/bin/python, /opt/courseflow-captcha/server.py, --host, 0.0.0.0, --port, '8190']
+    environment:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [CMD, /opt/captcha-venv/bin/python, -c, "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1:8190/health',timeout=3))['status']=='ok'"]
       interval: 5s
       timeout: 5s
       retries: 12

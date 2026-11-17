@@ -37,18 +37,25 @@ runs:
         print('RELEASE_VERSION='+os.environ['VERSION'])
         print('BUILD_ARGS')
         PY
-    - name: Backend type checks and all offline contracts (zero skips)
+    - name: Backend type checks and Python recognition contracts
       uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
       with:
         context: .build/context
         file: .build/context/api.Dockerfile
         target: test
+        load: true
+        tags: courseflow-api-tests:${{ inputs.version }}
         platforms: linux/amd64
         build-args: ${{ steps.args.outputs.args }}
         cache-from: |
           type=gha,scope=api-test
           type=gha,scope=api
         cache-to: type=gha,scope=api-test,mode=max
+    - name: All backend offline contracts including sandboxed Chromium (zero skips)
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: docker run --rm --network none --security-opt "seccomp=$PWD/security/chromium-seccomp.json" "courseflow-api-tests:$VERSION" node /check/test-source.mjs
     - name: API runtime
       uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
       with:
