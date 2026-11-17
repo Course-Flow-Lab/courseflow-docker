@@ -30,7 +30,7 @@ try {
     runtime.manager.configure(row.id,{source:'fixture',...(row.id==='cx'?{python:'/opt/cx-venv/bin/python'}:{})});
     const descriptor=await runtime.manager.describe(row.id);
     assert.equal(descriptor.module.version,item.version);
-    const login=row.id==='unipus'?'password':'qr';
+    const login=descriptor.platform.login.includes('password')?'password':descriptor.platform.login[0];
     const challenge=await runtime.manager.loginBegin(owner,row.id,login);
     if(login==='password')await runtime.manager.loginSubmit(owner,row.id,challenge.session,{username:'synthetic',password:'synthetic'});
     let connected=false;

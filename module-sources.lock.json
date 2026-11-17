@@ -18,6 +18,12 @@
       "commit": "16ee22483384024091ad3cd49d355a966786021a",
       "target": "node24",
       "requirements": "Node.js 24+；live 模式需要 Chromium"
+    },
+    "qlteacher": {
+      "repository": "Course-Flow-Lab/courseflow-qlteacher",
+      "commit": "677372fd23a8602ddb1ff361f5f3a6a7e20e5249",
+      "target": "node24",
+      "requirements": "Node.js 24+；Framework ≥ 0.1.13；测验自动作答需要配置模型"
     }
   }
 }
