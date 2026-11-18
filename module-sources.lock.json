@@ -3,7 +3,7 @@
   "modules": {
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
-      "commit": "42145cec93116ccf9c82cfe24b3ab67749079252",
+      "commit": "7ea9487451da643c94784ac1445e4f1fa076c812",
       "target": "linux-x64",
       "requirements": "Linux amd64，glibc 2.36 或更新版本"
     },
