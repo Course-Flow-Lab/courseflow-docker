@@ -25,7 +25,7 @@ cp .env.example .env
 
 0.1.8 包含 Framework 0.1.13、WebUI 0.1.3 和 ZHS 0.3.8，提供团队多账号及共享课拼图验证。验证码服务预装 ddddocr 1.5.6，只在内部网络提供识别；数据库升级和回退要求见[更新说明](docs/upgrade.md)。
 
-主分支构建及[模块下载](https://course-flow-lab.github.io/courseflow-docker/)使用 ZHS 0.3.9，修复验证码弹窗初始化后一直等待、最终提示超时的问题。已部署 0.1.8 的用户可按[模块安装说明](docs/modules.md)单独升级 ZHS。
+0.1.9 配套 Framework 0.1.14、WebUI 0.1.4 和 ZHS 0.3.9。智慧树修复验证码弹窗加载超时。模块升级后，兼容的旧任务可从任务详情迁移并继续。独立模块包见 [ZHS Releases](https://github.com/Course-Flow-Lab/courseflow-zhs/releases) 和[模块下载页](https://course-flow-lab.github.io/courseflow-docker/)。
 
 ## 日常使用
 
