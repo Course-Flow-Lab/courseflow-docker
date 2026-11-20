@@ -25,6 +25,8 @@ cp .env.example .env
 
 0.1.8 包含 Framework 0.1.13、WebUI 0.1.3 和 ZHS 0.3.8，提供团队多账号及共享课拼图验证。验证码服务预装 ddddocr 1.5.6，只在内部网络提供识别；数据库升级和回退要求见[更新说明](docs/upgrade.md)。
 
+0.1.10 配套 Framework 0.1.18、WebUI 0.1.5、ZHS 0.3.16 和超星 0.1.9。智慧树使用官方验证码组件，并可在任务弹窗中手动完成验证；超星支持前置章节接续学习、前置测验作答及提交结果恢复。可选模块更新为 U校园 0.5.1 和 QLTeacher 0.2.4，分别提供宿主题库复用与视频真实计时修复。升级步骤及旧任务迁移要求见[更新说明](docs/upgrade.md)。
+
 0.1.9 配套 Framework 0.1.14、WebUI 0.1.4 和 ZHS 0.3.9。智慧树修复验证码弹窗加载超时。模块升级后，兼容的旧任务可从任务详情迁移并继续。独立模块包见 [ZHS Releases](https://github.com/Course-Flow-Lab/courseflow-zhs/releases) 和[模块下载页](https://course-flow-lab.github.io/courseflow-docker/)。
 
 ## 日常使用

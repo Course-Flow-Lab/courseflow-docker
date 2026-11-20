@@ -3,25 +3,25 @@
   "modules": {
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
-      "commit": "7bf0829b9c601e7d860078806e42f8606b0f1fd5",
+      "commit": "868d38be3932b4a4301e07198a10e021c3f5260e",
       "target": "linux-x64",
       "requirements": "Linux amd64，glibc 2.36 或更新版本"
     },
     "cx": {
       "repository": "Course-Flow-Lab/courseflow-chaoxing",
-      "commit": "37d7115cfa550a1b55290c2e7ed981e0817f96fb",
+      "commit": "ccd7ff496d159598b793706cdef52f70faa57288",
       "target": "python3",
       "requirements": "Python 3.11+；需安装包内 requirements.txt"
     },
     "unipus": {
       "repository": "Course-Flow-Lab/courseflow-uai",
-      "commit": "867321338ff1b71f83bbb4dccf173e1aee62edc8",
+      "commit": "5f8cd9f1649ce05b1b17810ee4955c531a159ffd",
       "target": "node24",
       "requirements": "Node.js 24+；live 模式需要 Chromium"
     },
     "qlteacher": {
       "repository": "Course-Flow-Lab/courseflow-qlteacher",
-      "commit": "f86605f1d8e26c175558850c975c90e40f92632f",
+      "commit": "786befa3e3b1ff72dccc22a132fa613279946fa9",
       "target": "node24",
       "requirements": "Node.js 24+；Framework ≥ 0.1.13；测验自动作答需要配置模型"
     }
