@@ -21,7 +21,7 @@ cp .env.example .env
 
 远端部署时，将现有 HTTPS 反向代理指向 `127.0.0.1:8100`，并把 `.env` 的 `PUBLIC_URL` 设置为浏览器实际使用的 HTTPS 源地址。参考 [Nginx 示例](examples/nginx.conf)。网关默认仅绑定回环；API 不发布宿主端口。
 
-`images.lock.env` 固定已发布镜像 digest，来源为 [GitHub Packages](https://github.com/orgs/Course-Flow-Lab/packages?repo_name=courseflow-docker)。也可从 [Releases](https://github.com/Course-Flow-Lab/courseflow-docker/releases) 下载带锁文件的部署包或完整离线包。
+默认使用 [GitHub Packages](https://github.com/orgs/Course-Flow-Lab/packages?repo_name=courseflow-docker) 中的 `ghcr.io/course-flow-lab/courseflow-api:latest` 和 `ghcr.io/course-flow-lab/courseflow-webui:latest`；API 与验证码服务复用 API 镜像。`images.lock.env` 保留这两个 `:latest` 引用，Compose 使用 `pull_policy: always`。历史固定版本部署包及离线包仍可从 [Releases](https://github.com/Course-Flow-Lab/courseflow-docker/releases) 获取。
 
 0.1.8 包含 Framework 0.1.13、WebUI 0.1.3 和 ZHS 0.3.8，提供团队多账号及共享课拼图验证。验证码服务预装 ddddocr 1.5.6，只在内部网络提供识别；数据库升级和回退要求见[更新说明](docs/upgrade.md)。
 
@@ -45,7 +45,7 @@ cp .env.example .env
 
 运行数据默认位于部署仓库相邻的 `docker-state/`，独立于仓库。设置 `STATE_DIR` 可选择支持 Unix 私有权限的其他绝对路径。`down` 只移除本实例的容器和网络，数据保留。初始化可重复执行；遇到已有但无法识别的数据目录会停止，不会重新生成密钥。
 
-每次正式发布都会更新 `ghcr.io/course-flow-lab/courseflow-api:latest` 和 `ghcr.io/course-flow-lab/courseflow-webui:latest`。`update latest` 主动拉取两个镜像，核对属于同一版本，再解析为固定 digest，执行备份、模块更新和健康检查；失败时回退。执行前先 `git pull --ff-only` 更新本部署仓库。固定版本升级仍可传入 Release 的 `images.lock.env`。
+每次正式发布都会更新 `ghcr.io/course-flow-lab/courseflow-api:latest` 和 `ghcr.io/course-flow-lab/courseflow-webui:latest`。`update latest` 主动拉取两个镜像，核对属于同一版本，执行备份、模块更新和健康检查；部署配置及容器继续使用字面量 `:latest`，不转换为版本标签或 digest。执行前先 `git pull --ff-only` 更新本部署仓库。`latest` 是可变标签，恢复旧数据不代表回退镜像版本；固定版本恢复仍可显式传入 Release 的 `images.lock.env`。
 
 每个实例只保留 **一份** 已验证备份 `backups/latest`；离机导出使用固定文件名 `courseflow-backup.tgz`，校验成功后替换上一份。备份会短暂停止 API；运行中的任务会暂停，恢复后需人工确认再继续。请阅读 [备份与恢复](docs/backup.md)。
 

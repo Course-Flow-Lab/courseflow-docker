@@ -78,8 +78,7 @@ elif args[:2]==['image','inspect'] and args[-1].endswith(':latest'):
     if 'Labels' in args[3]:
         print('dev' if scenario=='bad-version' else 'v0.1.2' if web and scenario=='mixed' else 'v0.1.3')
     else:
-        print('unrelated.example/image@sha256:'+'f'*64)
-        if scenario!='missing-digest': print(args[-1].removesuffix(':latest')+'@sha256:'+('b' if web else 'a')*64)
+        sys.exit('latest updates must not resolve digest pins')
 elif args[0]=='compose' and 'ps' in args: print('synthetic-'+args[-1])
 elif args[0]=='inspect': print('healthy')
 elif args[0] not in ('image','run','compose'): sys.exit(2)
@@ -87,13 +86,14 @@ elif args[0] not in ('image','run','compose'): sys.exit(2)
 
 
 class UpdateTests(unittest.TestCase):
-    def exercise(self, scenario):
+    def exercise(self, scenario, previous_latest=False):
         with tempfile.TemporaryDirectory(prefix='courseflow-latest-') as name:
             tmp = Path(name)
             binary = tmp/'bin'; binary.mkdir()
             docker = binary/'docker'; docker.write_text(DOCKER); docker.chmod(0o755)
             state = tmp/'state'; deployment = state/'deployment'; deployment.mkdir(parents=True)
-            previous = f'API_IMAGE={registry}/courseflow-api@sha256:'+('c'*64)+f'\nWEB_IMAGE={registry}/courseflow-webui@sha256:'+('d'*64)+'\n'
+            expected = f'API_IMAGE={registry}/courseflow-api:latest\nWEB_IMAGE={registry}/courseflow-webui:latest\n'
+            previous = expected if previous_latest else f'API_IMAGE={registry}/courseflow-api@sha256:'+('c'*64)+f'\nWEB_IMAGE={registry}/courseflow-webui@sha256:'+('d'*64)+'\n'
             (deployment/'images.lock.env').write_text(previous)
             config = tmp/'instance.env'; config.write_text(f'PUBLIC_URL=http://127.0.0.1:8100\nSTATE_DIR={state}\n')
             log = tmp/'docker.jsonl'
@@ -102,25 +102,34 @@ class UpdateTests(unittest.TestCase):
             result = subprocess.run([str(root/'scripts/courseflow'),'update','latest'],env=env,text=True,capture_output=True)
             calls = [json.loads(line) for line in log.read_text().splitlines()]
             pulls = [args[-1] for args in calls if args[0]=='pull']
-            self.assertEqual(pulls,[registry+'/courseflow-api:latest',registry+'/courseflow-webui:latest'] if scenario not in ('bad-version','missing-digest') else [registry+'/courseflow-api:latest'])
+            self.assertEqual(pulls,[registry+'/courseflow-api:latest',registry+'/courseflow-webui:latest'] if scenario!='bad-version' else [registry+'/courseflow-api:latest'])
             if scenario=='ok':
                 self.assertEqual(result.returncode,0,result.stderr)
-                expected = f'API_IMAGE={registry}/courseflow-api@sha256:'+('a'*64)+f'\nWEB_IMAGE={registry}/courseflow-webui@sha256:'+('b'*64)+'\n'
                 self.assertEqual((state/'images.latest.env').read_text(),expected)
                 self.assertEqual((deployment/'images.lock.env').read_text(),expected)
                 self.assertTrue(any(args[0]=='run' and 'backup' in args for args in calls))
                 self.assertTrue(any(args[0]=='compose' and '--wait' in args for args in calls))
+                self.assertNotIn('@sha256:', (deployment/'images.lock.env').read_text())
+                self.assertFalse(any('RepoDigests' in str(args) for args in calls))
             else:
                 self.assertNotEqual(result.returncode,0)
                 self.assertEqual((deployment/'images.lock.env').read_text(),previous)
                 self.assertFalse((state/'images.latest.env').exists())
                 self.assertFalse(any(args[0] in ('compose','run') for args in calls),'拉取与配对失败不能停止现有服务或写入备份')
 
-    def test_always_pull_latest_then_deploy_pinned_digests(self): self.exercise('ok')
+    def test_update_replaces_legacy_pins_with_literal_latest_tags(self): self.exercise('ok')
+    def test_existing_latest_deployment_still_pulls_and_keeps_latest(self): self.exercise('ok', previous_latest=True)
     def test_reject_mixed_versions_before_stopping_services(self): self.exercise('mixed')
     def test_pull_failure_keeps_current_deployment(self): self.exercise('pull-failure')
     def test_reject_nonrelease_labels(self): self.exercise('bad-version')
-    def test_reject_missing_digest(self): self.exercise('missing-digest')
+
+    def test_repository_defaults_use_latest_and_always_pull(self):
+        expected = f'API_IMAGE={registry}/courseflow-api:latest\nWEB_IMAGE={registry}/courseflow-webui:latest\n'
+        self.assertEqual((root/'images.lock.env').read_text(), expected)
+        compose = (root/'compose.yaml').read_text()
+        self.assertEqual(compose.count('pull_policy: always'), 3)
+        self.assertNotIn('pull_policy: never', compose)
+        self.assertNotIn('@sha256:', compose)
 
 
 class WorkspaceTests(unittest.TestCase):

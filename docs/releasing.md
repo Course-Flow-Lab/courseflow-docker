@@ -21,7 +21,7 @@ CI 的 `check.yml` 在 main、Pull Request 和手动触发时运行完整构建�
 4. 首次创建 GHCR 包时，组织管理员需要在两个包的 Package settings 中把 visibility 设为 Public。GitHub 的新包默认私有，即使关联仓库已经公开。如果 Public 不可选，先由组织管理员在 Settings → Packages → Package creation 允许 Public。若因此匿名拉取失败，先改为公开，再重跑该发布工作流；未完成的 Release 保持草稿。
 5. 版本镜像通过匿名拉取后，工作流必须把 API 与 WebUI 同时标记并推送为 `latest`，再验证匿名拉取 `latest`。正式发布保留不可变的 `vX.Y.Z` 标签与 digest；不能只推版本标签而漏掉 `latest`。所有发布共用并发锁，补发较旧版本时不会覆盖更新正式版本的 `latest`。
 6. 全部验证通过后公开 Release，包含在线部署包、离线镜像包、digest 锁文件、离线镜像标签索引、来源清单及 SHA-256。离线本地镜像 ID 由目标机的 `load` 命令生成。
-7. 从已发布 Release 下载 `images.lock.env`，提交到 main，供新克隆的用户直接启动。不要手工猜测 digest；远端可运行 `./scripts/courseflow update latest` 主动获取最新版，该命令会把 `latest` 解析为固定 digest 后部署。
+7. main 中的 `images.lock.env` 始终保留 API 与 WebUI 的 `:latest` 引用，不用 Release 的固定 digest 锁文件覆盖它。`./scripts/courseflow update latest` 主动拉取、核对配套版本并保留这两个标签；Release 的 digest 锁文件用于来源验证及显式选择历史版本。
 
 镜像分别为 `ghcr.io/course-flow-lab/courseflow-api` 与 `ghcr.io/course-flow-lab/courseflow-webui`，镜像 source 标签关联此部署仓库。工作流中使用固定提交的 Actions；更新这些提交时仍应先通过完整验收。
 
