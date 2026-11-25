@@ -30,7 +30,7 @@ read_config() {
   done < "$file"
 }
 PROJECT_NAME=courseflow-docker; WEB_PORT=8100; PUBLIC_URL=
-STATE_DIR=${CF_STATE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/courseflow-docker}
+STATE_DIR=${CF_STATE_DIR:-$(dirname -- "$ROOT")/docker-state}
 read_config "${CF_CONFIG:-$ROOT/.env}" settings
 [[ "$STATE_DIR" == /* && "$STATE_DIR" != / && "$STATE_DIR" != "$HOME" && "$STATE_DIR" != *$'\n'* ]] || fail 'STATE_DIR must be an absolute private instance directory'
 [[ "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9_-]+$ ]] || fail 'Invalid PROJECT_NAME'

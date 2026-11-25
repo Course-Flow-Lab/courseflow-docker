@@ -3,13 +3,13 @@
   "modules": {
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
-      "commit": "94925540a9d77b30a538742abf709f57b6052912",
+      "commit": "37270d80e4ebb3ba91ba05bae264c730a5a2236d",
       "target": "linux-x64",
       "requirements": "Linux amd64，glibc 2.36 或更新版本"
     },
     "cx": {
       "repository": "Course-Flow-Lab/courseflow-chaoxing",
-      "commit": "0fc9721e1d3b26a4ad6ce8ff7a3804eaf0e80d2c",
+      "commit": "c9a8525c28da327f24a087468b0702607deef08c",
       "target": "python3",
       "requirements": "Python 3.11+；需安装包内 requirements.txt"
     },
@@ -21,7 +21,7 @@
     },
     "qlteacher": {
       "repository": "Course-Flow-Lab/courseflow-qlteacher",
-      "commit": "75f01d1d8256b28ffba1b16e1df940b820924cda",
+      "commit": "94ed3389b6fff7f0f4dde4f25dff474ec33ccdec",
       "target": "node24",
       "requirements": "Node.js 24+；Framework ≥ 0.1.13；测验自动作答需要配置模型"
     }

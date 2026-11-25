@@ -122,4 +122,23 @@ class UpdateTests(unittest.TestCase):
     def test_reject_missing_digest(self): self.exercise('missing-digest')
 
 
+class WorkspaceTests(unittest.TestCase):
+    def test_default_state_stays_inside_unified_workspace(self):
+        with tempfile.TemporaryDirectory(prefix='courseflow-workspace-') as name:
+            home = Path(name)
+            binary = home/'bin'; binary.mkdir()
+            docker = binary/'docker'; docker.write_text('#!/bin/sh\nexit 0\n'); docker.chmod(0o755)
+            config = home/'instance.env'; config.write_text('PUBLIC_URL=http://127.0.0.1:8100\n')
+            env = {**os.environ, 'HOME': str(home), 'XDG_DATA_HOME': str(home/'xdg'),
+                   'PATH': str(binary)+':'+os.environ['PATH'], 'CF_CONFIG': str(config)}
+            env.pop('CF_STATE_DIR', None)
+            result = subprocess.run([str(root/'scripts/courseflow'), 'status'], env=env, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            state = home/'docker-state'
+            self.assertTrue((state/'.lock').is_file())
+            self.assertEqual(state.stat().st_mode & 0o777, 0o700)
+            self.assertFalse((home/'xdg').exists())
+            self.assertFalse((home/'.local').exists())
+
+
 if __name__=='__main__': unittest.main()

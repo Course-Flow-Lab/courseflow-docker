@@ -9,7 +9,7 @@
 | PUBLIC_URL | 示例为 http://127.0.0.1:8100 | 必填，浏览器实际访问的源地址，不含路径 |
 | WEB_PORT | 8100 | 宿主回环网关端口 |
 | PROJECT_NAME | courseflow-docker | 本实例的 Compose 名称 |
-| STATE_DIR | ~/.local/share/courseflow-docker | 私有状态目录；自定义时填写绝对路径 |
+| STATE_DIR | /path/to/workspace/docker-state | 私有状态目录；远端使用 /path/to/courseflow/state；自定义时填写绝对路径 |
 
 修改 URL 或端口后，执行 `update images.lock.env`，会先备份再应用配置。每个实例使用独立的 STATE_DIR、PROJECT_NAME 和端口。不要把多个项目指向同一 SQLite 目录。
 
