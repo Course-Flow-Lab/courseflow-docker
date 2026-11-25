@@ -4,11 +4,11 @@
   "components": {
     "framework": {
       "repository": "Course-Flow-Lab/courseflow-framework",
-      "commit": "e9aee6c02b229e097e3d717c8416d86ebf23ed8e"
+      "commit": "a2d161ec97c5b051994e17d37004513ae5b61a4a"
     },
     "webui": {
       "repository": "Course-Flow-Lab/courseflow-webui",
-      "commit": "75bcf8495dde6b05b9637151205df2e3556a6959"
+      "commit": "e95e5bceedb14687490cc61e5e94f11092b22d99"
     },
     "zhs": {
       "repository": "Course-Flow-Lab/courseflow-zhs",
@@ -16,7 +16,7 @@
     },
     "cx": {
       "repository": "Course-Flow-Lab/courseflow-chaoxing",
-      "commit": "c9a8525c28da327f24a087468b0702607deef08c"
+      "commit": "5cda567e8d34842cafe1f6e2b1f29ea49c6549a0"
     }
   },
   "base_images": {
