@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -129,10 +130,12 @@ class WorkspaceTests(unittest.TestCase):
             binary = home/'bin'; binary.mkdir()
             docker = binary/'docker'; docker.write_text('#!/bin/sh\nexit 0\n'); docker.chmod(0o755)
             config = home/'instance.env'; config.write_text('PUBLIC_URL=http://127.0.0.1:8100\n')
+            script = home/'checkout/scripts/courseflow'; script.parent.mkdir(parents=True)
+            shutil.copy2(root/'scripts/courseflow', script)
             env = {**os.environ, 'HOME': str(home), 'XDG_DATA_HOME': str(home/'xdg'),
                    'PATH': str(binary)+':'+os.environ['PATH'], 'CF_CONFIG': str(config)}
             env.pop('CF_STATE_DIR', None)
-            result = subprocess.run([str(root/'scripts/courseflow'), 'status'], env=env, text=True, capture_output=True)
+            result = subprocess.run([str(script), 'status'], env=env, text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             state = home/'docker-state'
             self.assertTrue((state/'.lock').is_file())

@@ -8,7 +8,7 @@ cd courseflow-docker
 cp .env.example .env
 # 修改 PUBLIC_URL 和实例目录
 ./scripts/courseflow load "$PWD"
-CF_IMAGES_LOCK="$HOME/workspace/courseflow/docker-state/images.local.env" ./scripts/courseflow init
+CF_IMAGES_LOCK="/path/to/state/images.local.env" ./scripts/courseflow init
 ./scripts/courseflow up
 ```
 

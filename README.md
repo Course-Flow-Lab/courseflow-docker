@@ -7,8 +7,6 @@ Courseflow 的即用部署入口：API、Web 与内部验证码服务三个容�
 ## 快速开始
 
 ```sh
-mkdir -p "$HOME/workspace/courseflow"
-cd "$HOME/workspace/courseflow"
 git clone https://github.com/Course-Flow-Lab/courseflow-docker.git
 cd courseflow-docker
 cp .env.example .env
@@ -27,7 +25,7 @@ cp .env.example .env
 
 0.1.8 包含 Framework 0.1.13、WebUI 0.1.3 和 ZHS 0.3.8，提供团队多账号及共享课拼图验证。验证码服务预装 ddddocr 1.5.6，只在内部网络提供识别；数据库升级和回退要求见[更新说明](docs/upgrade.md)。
 
-0.1.11 配套 Framework 0.1.20、WebUI 0.1.8、ZHS 0.3.16 和超星 0.1.10。包含实时手动验证码拖动、管理员拖动测试、模型答案格式重试、全局夜间后台保活限制，以及超星历史交卷与现有答卷的只读核对。全部本机文件统一放在 `/path/to/workspace/`，远端使用 `/path/to/courseflow/`；生产镜像从 GHCR 拉取并固定 digest，不使用本机构建标签。超星旧任务请显式迁移，详见[更新说明](docs/upgrade.md)。
+0.1.11 配套 Framework 0.1.20、WebUI 0.1.8、ZHS 0.3.16 和超星 0.1.10。包含实时手动验证码拖动、管理员拖动测试、模型答案格式重试、全局夜间后台保活限制，以及超星历史交卷与现有答卷的只读核对。超星旧任务请显式迁移，详见[更新说明](docs/upgrade.md)。
 
 0.1.10 配套 Framework 0.1.18、WebUI 0.1.5、ZHS 0.3.16 和超星 0.1.9。智慧树使用官方验证码组件，并可在任务弹窗中手动完成验证；超星支持前置章节接续学习、前置测验作答及提交结果恢复。可选模块更新为 U校园 0.5.1 和 QLTeacher 0.2.4，分别提供宿主题库复用与视频真实计时修复。升级步骤及旧任务迁移要求见[更新说明](docs/upgrade.md)。
 
@@ -45,7 +43,7 @@ cp .env.example .env
 ./scripts/courseflow down
 ```
 
-本机工作区统一位于 `/path/to/workspace/`，运行数据默认位于其中的 `docker-state/`，独立于源码仓库。其他工作树、构建输出和备份也放在此工作区内；远端部署统一使用 `/path/to/courseflow/`（例如 `STATE_DIR=/path/to/courseflow/state`）。设置 `STATE_DIR` 时使用支持 Unix 私有权限的绝对路径。`down` 只移除本实例的容器和网络，数据保留。初始化可重复执行；遇到已有但无法识别的数据目录会停止，不会重新生成密钥。
+运行数据默认位于部署仓库相邻的 `docker-state/`，独立于仓库。设置 `STATE_DIR` 可选择支持 Unix 私有权限的其他绝对路径。`down` 只移除本实例的容器和网络，数据保留。初始化可重复执行；遇到已有但无法识别的数据目录会停止，不会重新生成密钥。
 
 每次正式发布都会更新 `ghcr.io/course-flow-lab/courseflow-api:latest` 和 `ghcr.io/course-flow-lab/courseflow-webui:latest`。`update latest` 主动拉取两个镜像，核对属于同一版本，再解析为固定 digest，执行备份、模块更新和健康检查；失败时回退。执行前先 `git pull --ff-only` 更新本部署仓库。固定版本升级仍可传入 Release 的 `images.lock.env`。
 
